@@ -1,0 +1,195 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lottie/lottie.dart';
+import 'package:poke_design_system/widgets/poke_app_bar.dart';
+import 'package:poke_design_system/widgets/poke_card.dart';
+import 'package:pokeboti/domain/entities/pokemon.dart';
+import 'package:pokeboti/presentation/pokemon_list/cubit/pokemon_list_cubit.dart';
+
+class PokemonListPage extends StatefulWidget {
+  const PokemonListPage({super.key});
+
+  @override
+  State<PokemonListPage> createState() => _PokemonListPageState();
+}
+
+class _PokemonListPageState extends State<PokemonListPage> {
+  @override
+  //O initState informa para a UI qual será o estado inicial da tela
+
+  void initState() {
+    super.initState();
+    //O BlocProvider é utilizado para carregar o cubit na tela
+    //e chamar o método que pega os pokemons
+    BlocProvider.of<PokemonListCubit>(context).getPokemons();
+    scrollController.addListener(() {
+      if (scrollController.position.pixels ==
+          scrollController.position.maxScrollExtent) {
+        if (pokemonList != null) {
+          BlocProvider.of<PokemonListCubit>(context)
+              .getPokemons(currentPokemonList: pokemonList as PokemonList);
+        }
+      }
+    });
+  }
+
+  //Cria-se uma váriavel para acessar os atributos de PokemonList na tela
+  final ScrollController scrollController = ScrollController();
+  var pokemonList;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: const PokeAppBar(
+        title: 'Pokébot',
+        image: 'assets/images/header_pokeball.png',
+      ),
+      //O BlocBuilder constroi o contexto e o estado da tela
+      //Dentro do BLocBuilder é feita uma verificação do estado da tela
+      //e a partir disso é definido o que será impresso na tela
+      body: BlocBuilder<PokemonListCubit, PokemonListState>(
+        builder: (context, state) {
+          if (state is PokemonListSuccess) {
+            pokemonList = state.pokemonList;
+            return Padding(
+              padding: EdgeInsets.all(16.r),
+              child: GridView.builder(
+                controller: scrollController,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 130.r,
+                  childAspectRatio: 1.5.r,
+                  crossAxisSpacing: 10.r,
+                  mainAxisSpacing: 10.r,
+                  mainAxisExtent: 150.r,
+                ),
+                itemCount: state.pokemonList.pokemons.length,
+                itemBuilder: (BuildContext ctx, index) {
+                  final pokemon = state.pokemonList.pokemons[index];
+                  return GestureDetector(
+                    key: const Key('pokeCard'),
+                    onTap: () {
+                      Navigator.pushNamed(context, '/pokemon-detail-page',
+                          arguments: state.pokemonList.pokemons[index]);
+                    },
+                    child: Hero(
+                      tag: pokemon.id,
+                      child: PokeCard(
+                        pokemonName: pokemon.name,
+                        pokemonImage:
+                            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png',
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          } else {
+            Timer(
+              const Duration(seconds: 5),
+              () {},
+            );
+            return Center(
+              child: Lottie.network(
+                'https://assets1.lottiefiles.com/packages/lf20_iwmd6pyr.json',
+                width: 45.r,
+                height: 45.r,
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
+
+
+// class PokemonListPage extends StatefulWidget {
+//   const PokemonListPage({super.key});
+
+//   @override
+//   State<PokemonListPage> createState() => _PokemonListPageState();
+// }
+
+// class _PokemonListPageState extends State<PokemonListPage> {
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     BlocProvider.of<PokemonListCubit>(context).getPokemons();
+//     _scrollController.addListener(() {
+//       if (_scrollController.position.pixels ==
+//           _scrollController.position.maxScrollExtent) {
+//         if (pokemonList != null) {
+//           BlocProvider.of<PokemonListCubit>(context)
+//               .getPokemons(currentPokemonList: pokemonList as PokemonList);
+//         }
+//       }
+//     });
+//   }
+  
+//   final ScrollController _scrollController = ScrollController();
+//   var pokemonList;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Colors.white,
+//       appBar: const PokeAppBar(
+//         title: 'Pokébot',
+//         image: 'assets/images/header_pokeball.png',
+//       ),
+//       body: BlocBuilder<PokemonListCubit, PokemonListState>(
+//         builder: (context, state) {
+//           if (state is PokemonListSucess) {
+//             pokemonList = state.pokemonList;
+//             return Padding(
+//               padding: EdgeInsets.all(16.r),
+//               child: GridView.builder(
+//                 controller: _scrollController,
+//                 gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+//                   maxCrossAxisExtent: 130.r,
+//                   childAspectRatio: 1.5.r,
+//                   crossAxisSpacing: 10.r,
+//                   mainAxisSpacing: 10.r,
+//                   mainAxisExtent: 150.r,
+//                 ),
+//                 itemCount: state.pokemonList.pokemons.length,
+//                 itemBuilder: (BuildContext ctx, index) {
+//                   final pokemon = state.pokemonList.pokemons[index];
+//                   return GestureDetector(
+//                     key: const Key('pokeCard'),
+//                     onTap: () {
+//                       Navigator.pushNamed(context, '/pokemon-detail-page',
+//                           arguments: pokemonList[index]);
+//                     },
+//                     child: Hero(
+//                       tag: pokemon.id,
+//                       child: PokeCard(
+//                         pokemonName: pokemon.name,
+//                         pokemonImage:
+//                             'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png',
+//                       ),
+//                     ),
+//                   );
+//                 },
+//               ),
+//             );
+//           } else {
+//             return Center(
+//               child: Lottie.asset(
+//                 'assets/lottie/pokeball-loading-animation.json',
+//                 width: 45.r,
+//                 height: 45.r,
+//               ),
+//             );
+//           }
+//         },
+//       ),
+//     );
+//   }
+// }
+
